@@ -28,7 +28,7 @@
 
         /* Map */
         #map {
-            height: calc(100vh - 100px); /* leave space for header & search */
+            height: calc(100vh - 100px);
             width: 100%;
         }
 
@@ -125,41 +125,48 @@
     const searchInput = document.getElementById("search");
     const resultsDiv = document.getElementById("results");
 
+    // Load reservoirs from static JSON
+    let reservoirs = [];
+
+    fetch('/reservoirs.json')
+        .then(response => response.json())
+        .then(data => {
+            reservoirs = data;
+        })
+        .catch(err => console.error("Failed to load reservoirs.json:", err));
+
     // Autocomplete search
-    searchInput.addEventListener("input", async function () {
-        const query = this.value.trim();
+    searchInput.addEventListener("input", function () {
+        const query = this.value.trim().toLowerCase();
         resultsDiv.innerHTML = "";
 
         if (query.length < 2) return;
 
-        try {
-            const response = await fetch(`/api/reservoirs/?q=${encodeURIComponent(query)}`);
-            const data = await response.json();
+        const filtered = reservoirs.filter(item => 
+            item.name.toLowerCase().includes(query)
+        );
 
-            data.forEach(item => {
-                const div = document.createElement("div");
-                div.className = "result-item";
-                div.textContent = item.name;
+        filtered.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "result-item";
+            div.textContent = item.name;
 
-                div.addEventListener("click", () => {
-                    if (marker) map.removeLayer(marker);
+            div.addEventListener("click", () => {
+                if (marker) map.removeLayer(marker);
 
-                    map.setView([item.lat, item.lon], 11);
+                map.setView([item.lat, item.lon], 11);
 
-                    marker = L.marker([item.lat, item.lon])
-                        .addTo(map)
-                        .bindPopup(item.name)
-                        .openPopup();
+                marker = L.marker([item.lat, item.lon])
+                    .addTo(map)
+                    .bindPopup(item.name)
+                    .openPopup();
 
-                    resultsDiv.innerHTML = "";
-                    searchInput.value = item.name;
-                });
-
-                resultsDiv.appendChild(div);
+                resultsDiv.innerHTML = "";
+                searchInput.value = item.name;
             });
-        } catch (err) {
-            console.error("Search error:", err);
-        }
+
+            resultsDiv.appendChild(div);
+        });
     });
 
     // Hide results when clicking outside
