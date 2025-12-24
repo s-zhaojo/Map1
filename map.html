@@ -128,7 +128,7 @@
     // Load reservoirs from static JSON
     let reservoirs = [];
 
-    fetch('/reservoirs.json')
+    fetch('reservoirs.json')
         .then(response => response.json())
         .then(data => {
             reservoirs = data;
